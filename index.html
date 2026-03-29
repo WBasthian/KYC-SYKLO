@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Syklo — Verificación de Identidad</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="kyc-page">
+
+  <!-- ── BACKGROUND GRID ── -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-orb bg-orb--1" aria-hidden="true"></div>
+  <div class="bg-orb bg-orb--2" aria-hidden="true"></div>
+
+  <!-- ── HEADER ── -->
+  <header class="site-header">
+    <div class="container">
+      <a href="#" class="brand">
+        <span class="brand__mark">S</span>
+        <span class="brand__name">SYKLO</span>
+      </a>
+      <span class="header-badge">
+        <span class="badge-dot"></span>
+        Verificación KYC
+      </span>
+    </div>
+  </header>
+
+  <!-- ── MAIN ── -->
+  <main class="kyc-main">
+    <div class="container container--narrow">
+
+      <!-- Intro -->
+      <div class="kyc-intro">
+        <div class="kyc-intro__tag">Proceso seguro</div>
+        <h1 class="kyc-intro__title">Verifica tu<br /><span class="text-accent">identidad</span></h1>
+        <p class="kyc-intro__desc">
+          Para garantizar la seguridad de todos en la plataforma Syklo, necesitamos validar tu identidad. 
+          El proceso toma menos de 5 minutos.
+        </p>
+        <div class="kyc-steps">
+          <div class="step">
+            <span class="step__num">01</span>
+            <span class="step__label">Datos personales</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step">
+            <span class="step__num">02</span>
+            <span class="step__label">Documentos</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step">
+            <span class="step__num">03</span>
+            <span class="step__label">Revisión</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── FORM ── -->
+      <form id="kyc-form" class="kyc-form" novalidate>
+
+        <!-- Section 1: Account & Personal Info -->
+        <section class="form-section">
+          <div class="form-section__header">
+            <span class="form-section__num">01</span>
+            <div>
+              <h2 class="form-section__title">Información Personal</h2>
+              <p class="form-section__sub">Datos de tu cuenta y perfil</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group form-group--full">
+              <label for="username" class="form-label">
+                Nombre de usuario <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <span class="input-icon">@</span>
+                <input type="text" id="username" name="username" class="form-input" 
+                       placeholder="tu_usuario_syklo" autocomplete="username" required />
+              </div>
+              <span class="form-error" id="username-error"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="first_name" class="form-label">
+                Nombres <span class="required">*</span>
+              </label>
+              <input type="text" id="first_name" name="first_name" class="form-input"
+                     placeholder="Juan Carlos" autocomplete="given-name" required />
+              <span class="form-error" id="first_name-error"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="last_name" class="form-label">
+                Apellidos <span class="required">*</span>
+              </label>
+              <input type="text" id="last_name" name="last_name" class="form-input"
+                     placeholder="Rodríguez García" autocomplete="family-name" required />
+              <span class="form-error" id="last_name-error"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="doc_number" class="form-label">
+                Número de Documento <span class="required">*</span>
+              </label>
+              <input type="text" id="doc_number" name="doc_number" class="form-input font-mono"
+                     placeholder="12345678A" required />
+              <span class="form-error" id="doc_number-error"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="nationality" class="form-label">
+                Nacionalidad / País <span class="required">*</span>
+              </label>
+              <div class="select-wrapper">
+                <select id="nationality" name="nationality" class="form-select" required>
+                  <option value="">— Selecciona tu país —</option>
+                  <option value="AR">Argentina</option>
+                  <option value="BO">Bolivia</option>
+                  <option value="BR">Brasil</option>
+                  <option value="CL">Chile</option>
+                  <option value="CO">Colombia</option>
+                  <option value="CR">Costa Rica</option>
+                  <option value="CU">Cuba</option>
+                  <option value="EC">Ecuador</option>
+                  <option value="SV">El Salvador</option>
+                  <option value="ES">España</option>
+                  <option value="GT">Guatemala</option>
+                  <option value="HN">Honduras</option>
+                  <option value="MX">México</option>
+                  <option value="NI">Nicaragua</option>
+                  <option value="PA">Panamá</option>
+                  <option value="PY">Paraguay</option>
+                  <option value="PE">Perú</option>
+                  <option value="DO">Rep. Dominicana</option>
+                  <option value="UY">Uruguay</option>
+                  <option value="VE">Venezuela</option>
+                  <option value="US">Estados Unidos</option>
+                  <option value="OTHER">Otro</option>
+                </select>
+                <span class="select-arrow">▾</span>
+              </div>
+              <span class="form-error" id="nationality-error"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="email" class="form-label">
+                Correo electrónico <span class="required">*</span>
+              </label>
+              <input type="email" id="email" name="email" class="form-input"
+                     placeholder="juan@ejemplo.com" autocomplete="email" required />
+              <span class="form-error" id="email-error"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="phone" class="form-label">
+                Teléfono <span class="required">*</span>
+              </label>
+              <input type="tel" id="phone" name="phone" class="form-input font-mono"
+                     placeholder="+54 11 1234 5678" autocomplete="tel" required />
+              <span class="form-error" id="phone-error"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="dob" class="form-label">
+                Fecha de nacimiento <span class="required">*</span>
+              </label>
+              <input type="date" id="dob" name="dob" class="form-input" required />
+              <div class="age-display" id="age-display" aria-live="polite"></div>
+              <span class="form-error" id="dob-error"></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 2: Documents -->
+        <section class="form-section">
+          <div class="form-section__header">
+            <span class="form-section__num">02</span>
+            <div>
+              <h2 class="form-section__title">Documentos</h2>
+              <p class="form-section__sub">Sube imágenes claras y legibles</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+
+            <!-- ID Document Upload -->
+            <div class="form-group upload-group">
+              <label class="form-label">
+                Documento de Identidad <span class="required">*</span>
+              </label>
+              <p class="upload-hint">DNI, Pasaporte, Cédula — imagen o PDF (máx. 10 MB)</p>
+              <div class="dropzone" id="doc-dropzone" role="button" tabindex="0"
+                   aria-label="Subir documento de identidad">
+                <input type="file" id="doc_file" name="doc_file" class="dropzone__input"
+                       accept="image/*,.pdf" required />
+                <div class="dropzone__ui" id="doc-dropzone-ui">
+                  <div class="dropzone__icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                  </div>
+                  <p class="dropzone__label">Arrastra aquí o <span class="dropzone__link">haz clic para seleccionar</span></p>
+                  <p class="dropzone__formats">PNG · JPG · WEBP · PDF</p>
+                </div>
+                <div class="dropzone__preview" id="doc-preview"></div>
+              </div>
+              <span class="form-error" id="doc_file-error"></span>
+            </div>
+
+            <!-- Selfie Upload -->
+            <div class="form-group upload-group">
+              <label class="form-label">
+                Selfie / Video del Rostro <span class="required">*</span>
+              </label>
+              <p class="upload-hint">Foto frontal clara o video corto (máx. 50 MB)</p>
+              <div class="dropzone" id="selfie-dropzone" role="button" tabindex="0"
+                   aria-label="Subir selfie o video">
+                <input type="file" id="selfie_file" name="selfie_file" class="dropzone__input"
+                       accept="image/*,video/*" required />
+                <div class="dropzone__ui" id="selfie-dropzone-ui">
+                  <div class="dropzone__icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                  </div>
+                  <p class="dropzone__label">Arrastra aquí o <span class="dropzone__link">haz clic para seleccionar</span></p>
+                  <p class="dropzone__formats">PNG · JPG · MP4 · MOV · WEBM</p>
+                </div>
+                <div class="dropzone__preview" id="selfie-preview"></div>
+              </div>
+              <span class="form-error" id="selfie_file-error"></span>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Section 3: Review & Submit -->
+        <section class="form-section form-section--review">
+          <div class="form-section__header">
+            <span class="form-section__num">03</span>
+            <div>
+              <h2 class="form-section__title">Confirmación</h2>
+              <p class="form-section__sub">Revisa y envía tu solicitud</p>
+            </div>
+          </div>
+
+          <div class="consent-box">
+            <label class="checkbox-label">
+              <input type="checkbox" id="consent" name="consent" class="checkbox-input" required />
+              <span class="checkbox-custom"></span>
+              <span class="checkbox-text">
+                Declaro que toda la información proporcionada es verídica y autorizo a Syklo 
+                a procesar mis datos personales conforme a su 
+                <a href="#" class="link">Política de Privacidad</a>.
+              </span>
+            </label>
+            <span class="form-error" id="consent-error"></span>
+          </div>
+
+          <!-- Alert area -->
+          <div id="form-alert" class="form-alert" role="alert" aria-live="assertive"></div>
+
+          <button type="submit" id="submit-btn" class="btn btn--primary btn--lg btn--full">
+            <span class="btn__text">Enviar Verificación</span>
+            <span class="btn__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </span>
+            <span class="btn__loader" aria-hidden="true"></span>
+          </button>
+        </section>
+
+      </form>
+
+      <!-- ── SUCCESS STATE ── -->
+      <div id="kyc-success" class="kyc-success hidden" aria-live="polite">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <h2 class="success-title">Solicitud Enviada</h2>
+        <p class="success-desc">
+          Tu verificación KYC ha sido recibida y está 
+          <strong>pendiente de revisión</strong>. 
+          Recibirás una notificación en tu correo electrónico cuando sea procesada.
+        </p>
+        <div class="success-badge">
+          <span class="badge-dot badge-dot--pulse"></span>
+          Pendiente de verificación
+        </div>
+        <div class="success-id font-mono" id="success-submission-id"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ── FOOTER ── -->
+  <footer class="site-footer">
+    <div class="container">
+      <span>© 2025 Syklo · KYC Platform</span>
+      <span class="footer-security">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Cifrado TLS · Datos protegidos
+      </span>
+    </div>
+  </footer>
+
+  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/kyc-form.js"></script>
+</body>
+</html>
