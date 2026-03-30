@@ -290,7 +290,17 @@ async function addNote() {
   if (!text) return;
   const note = { text, createdAt: new Date().toISOString(), author: auth.currentUser?.email };
   try {
+    // 1. Guarda en la base de datos
     await updateDoc(doc(db, 'users', activeUserId), { notes: arrayUnion(note) });
+    
+    // 2. ACTUALIZACIÓN INSTANTÁNEA EN PANTALLA
+    const userData = allSubmissions.find(u => u.id === activeUserId);
+    if (userData) {
+      if (!userData.notes) userData.notes = [];
+      userData.notes.push(note);
+      renderNotes(userData.notes);
+    }
+
     document.getElementById('note-input').value = '';
   } catch (error) { console.error('Error:', error); }
 }
@@ -317,12 +327,15 @@ async function applySanction() {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + days);
     const sanction = { reason, days, appliedAt: new Date().toISOString(), expiresAt: expiresAt.toISOString(), appliedBy: auth.currentUser?.email };
+    
+    // 1. Guarda en la base de datos
     await updateDoc(doc(db, 'users', activeUserId), { sanctions: arrayUnion(sanction) });
 
-    // Enviar correo de sanción
     const userData = allSubmissions.find(u => u.id === activeUserId);
+    
+    // 2. Enviar correo de sanción
     const tpl = emailTemplates['sanction'];
-    if (userData.email && tpl && tpl.subject && tpl.html) {
+    if (userData && userData.email && tpl && tpl.subject && tpl.html) {
       await addDoc(collection(db, 'mail'), {
         to: userData.email,
         message: {
@@ -330,6 +343,13 @@ async function applySanction() {
           html: parseTemplate(tpl.html, userData, { motivo: reason, dias: days })
         }
       });
+    }
+
+    // 3. ACTUALIZACIÓN INSTANTÁNEA EN PANTALLA
+    if (userData) {
+      if (!userData.sanctions) userData.sanctions = [];
+      userData.sanctions.push(sanction);
+      renderSanctions(userData.sanctions);
     }
 
     document.getElementById('sanction-reason').value = '';
