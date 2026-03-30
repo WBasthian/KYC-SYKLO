@@ -48,8 +48,8 @@ function initDropzones() {
     input: selfieInput,
     uiEl: selfieDropzoneUI,
     previewEl: selfiePreview,
-    accept: ['image/', 'video/'],
-    maxBytes: 50 * 1024 * 1024,
+    accept: ['image/'],
+    maxBytes: 10 * 1024 * 1024, // CAMBIO 4: reducido de 50 MB a 10 MB (ya no se acepta video)
     onFileSelected: (file) => { selectedSelfieFile = file; },
     onFileRemoved: () => { selectedSelfieFile = null; },
     errorFieldId: 'selfie_file-error',
@@ -61,17 +61,20 @@ function setupDropzone({ dropzoneId, input, uiEl, previewEl, accept, maxBytes, o
   if (!zone || !input) return;
   const errorEl = document.getElementById(errorFieldId);
 
+  // CAMBIO 1: condición corregida para evitar doble clic
   zone.addEventListener('click', (e) => {
-    if (!e.target.classList.contains('preview-remove')) input.click();
+    if (e.target !== input && !e.target.classList.contains('preview-remove')) {
+      input.click();
+    }
   });
 
   zone.addEventListener('dragover', (e) => {
     e.preventDefault();
     zone.classList.add('is-dragover');
   });
-  
+
   zone.addEventListener('dragleave', () => zone.classList.remove('is-dragover'));
-  
+
   zone.addEventListener('drop', (e) => {
     e.preventDefault();
     zone.classList.remove('is-dragover');
@@ -84,17 +87,29 @@ function setupDropzone({ dropzoneId, input, uiEl, previewEl, accept, maxBytes, o
     if (file) processFile(file);
   });
 
-  function processFile(file) {
+  // CAMBIO 3: processFile ahora es async para integrar la compresión
+  async function processFile(fileOriginal) {
     clearError(errorEl);
-    const isAccepted = accept.some(type => file.type.startsWith(type));
+
+    const isAccepted = accept.some(type => fileOriginal.type.startsWith(type));
     if (!isAccepted) {
-      setError(errorEl, `Tipo de archivo no permitido: ${file.type || 'desconocido'}`);
+      setError(errorEl, `Tipo de archivo no permitido: ${fileOriginal.type || 'desconocido'}`);
       return;
     }
-    if (file.size > maxBytes) {
+    if (fileOriginal.size > maxBytes) {
       setError(errorEl, `El archivo supera el límite de ${maxBytes / (1024 * 1024)} MB.`);
       return;
     }
+
+    let file;
+    if (fileOriginal.type.startsWith('image/')) {
+      // Es una imagen: comprimir antes de continuar
+      file = await compressImage(fileOriginal);
+    } else {
+      // Es un PDF: usar el archivo original sin modificar
+      file = fileOriginal;
+    }
+
     onFileSelected(file);
     renderPreview(file, uiEl, previewEl, () => {
       onFileRemoved();
@@ -102,6 +117,68 @@ function setupDropzone({ dropzoneId, input, uiEl, previewEl, accept, maxBytes, o
       clearError(errorEl);
     });
   }
+}
+
+/**
+ * CAMBIO 2: Motor de compresión de imágenes.
+ * Redimensiona proporcionalmente si el ancho supera maxWidth,
+ * y convierte a JPEG con la calidad indicada.
+ * @param {File} file - Archivo de imagen original.
+ * @param {number} maxWidth - Ancho máximo en píxeles (por defecto 1200).
+ * @param {number} quality - Calidad JPEG entre 0 y 1 (por defecto 0.7).
+ * @returns {Promise<File>} - Nuevo archivo File comprimido en image/jpeg.
+ */
+async function compressImage(file, maxWidth = 1200, quality = 0.7) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = (readerEvent) => {
+      const img = new Image();
+
+      img.onload = () => {
+        // Calcular dimensiones proporcionales
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        // Dibujar en canvas con las nuevas dimensiones
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Exportar como Blob JPEG y envolver en File
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              // Si falla la compresión, devolver el archivo original
+              resolve(file);
+              return;
+            }
+            const compressedFile = new File(
+              [blob],
+              file.name.replace(/\.[^.]+$/, '.jpg'),
+              { type: 'image/jpeg', lastModified: Date.now() }
+            );
+            resolve(compressedFile);
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+
+      img.onerror = () => reject(new Error('No se pudo cargar la imagen para compresión.'));
+      img.src = readerEvent.target.result;
+    };
+
+    reader.onerror = () => reject(new Error('Error al leer el archivo.'));
+    reader.readAsDataURL(file);
+  });
 }
 
 function renderPreview(file, uiEl, previewEl, onRemove) {
@@ -222,7 +299,7 @@ export function validateField(fieldName, value) {
 function validateFullForm(data) {
   let isValid = true;
   const textFields = ['username', 'first_name', 'last_name', 'doc_number', 'nationality', 'email', 'phone', 'dob'];
-  
+
   textFields.forEach(field => {
     if (!validateField(field, data[field] || '')) isValid = false;
   });
@@ -232,7 +309,7 @@ function validateFullForm(data) {
     isValid = false;
   }
   if (!selectedSelfieFile) {
-    setError(document.getElementById('selfie_file-error'), 'Selfie/Video obligatorio.');
+    setError(document.getElementById('selfie_file-error'), 'Selfie obligatoria.');
     isValid = false;
   }
 
