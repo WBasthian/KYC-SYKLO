@@ -100,6 +100,13 @@
           </svg>
           <span>Estadísticas</span>
         </a>
+        <!-- NUEVO: Enlace a vista global de Sanciones -->
+        <a href="#" class="sidebar__link" data-view="sanctions">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span>Sanciones</span>
+        </a>
       </nav>
 
       <div class="sidebar__footer">
@@ -396,6 +403,27 @@
           <p class="text-muted">Las estadísticas se actualizan en tiempo real desde Firestore.</p>
         </div>
       </div>
+
+      <!-- ── SANCTIONS VIEW (NUEVO) ── -->
+      <div id="view-sanctions" class="dash-view hidden">
+        <div class="sanctions-view-header" style="padding: 0 0 var(--space-4, 1.5rem) 0;">
+          <h3 style="font-family: var(--font-display); font-size: 1.25rem; color: var(--clr-text);">
+            Usuarios Sancionados
+          </h3>
+          <p style="color: var(--clr-text-dim); font-size: 0.875rem; margin-top: 4px;">
+            Haz clic en un usuario para ir directamente a su pestaña de Gestión de Riesgo.
+          </p>
+        </div>
+        <div class="submissions-list" id="global-sanctions-list">
+          <!-- Tarjetas insertadas reactivamente por renderGlobalSanctions() -->
+          <div class="submissions-list__empty" id="sanctions-view-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <p>No hay usuarios sancionados</p>
+          </div>
+        </div>
+      </div><!-- /view-sanctions -->
 
     </div><!-- /dash-content -->
   </div><!-- /dashboard -->
