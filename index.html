@@ -214,15 +214,19 @@
             </div>
 
             <!-- Selfie Upload -->
+            <!-- CAMBIO 1: Label actualizado -->
+            <!-- CAMBIO 2: Upload hint actualizado -->
+            <!-- CAMBIO 3: accept solo imagen -->
+            <!-- CAMBIO 4: Formatos actualizados -->
             <div class="form-group upload-group">
               <label class="form-label">
-                Selfie / Video del Rostro <span class="required">*</span>
+                Selfie con Documento <span class="required">*</span>
               </label>
-              <p class="upload-hint">Foto frontal clara o video corto (máx. 50 MB)</p>
+              <p class="upload-hint">Foto frontal sosteniendo tu documento de identidad cerca del rostro (máx. 10 MB)</p>
               <div class="dropzone" id="selfie-dropzone" role="button" tabindex="0"
-                   aria-label="Subir selfie o video">
+                   aria-label="Subir selfie con documento">
                 <input type="file" id="selfie_file" name="selfie_file" class="dropzone__input"
-                       accept="image/*,video/*" required />
+                       accept="image/*" required />
                 <div class="dropzone__ui" id="selfie-dropzone-ui">
                   <div class="dropzone__icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -230,7 +234,7 @@
                     </svg>
                   </div>
                   <p class="dropzone__label">Arrastra aquí o <span class="dropzone__link">haz clic para seleccionar</span></p>
-                  <p class="dropzone__formats">PNG · JPG · MP4 · MOV · WEBM</p>
+                  <p class="dropzone__formats">PNG · JPG · WEBP</p>
                 </div>
                 <div class="dropzone__preview" id="selfie-preview"></div>
               </div>
