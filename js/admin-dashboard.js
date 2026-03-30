@@ -288,30 +288,57 @@ async function addNote() {
   if (!activeUserId) return;
   const text = document.getElementById('note-input').value.trim();
   if (!text) return;
-  const note = { text, createdAt: new Date().toISOString(), author: auth.currentUser?.email };
+  
+  // Guardamos el momento exacto
+  const exactTime = new Date();
+  const note = { text, createdAt: exactTime.toISOString(), author: auth.currentUser?.email };
+  
   try {
-    // 1. Guarda en la base de datos
+    // 1. Guardar en Firebase
     await updateDoc(doc(db, 'users', activeUserId), { notes: arrayUnion(note) });
     
-    // 2. ACTUALIZACIÓN INSTANTÁNEA EN PANTALLA
+    // 2. Actualización de Interfaz (Anti-Duplicados)
     const userData = allSubmissions.find(u => u.id === activeUserId);
     if (userData) {
       if (!userData.notes) userData.notes = [];
-      userData.notes.push(note);
-      renderNotes(userData.notes);
+      const isDuplicate = userData.notes.some(n => new Date(n.createdAt).getTime() === exactTime.getTime());
+      
+      if (!isDuplicate) {
+        userData.notes.push(note);
+        renderNotes(userData.notes);
+      }
     }
 
+    // 3. Limpiar formulario
     document.getElementById('note-input').value = '';
-  } catch (error) { console.error('Error:', error); }
+  } catch (error) { console.error('Error al agregar nota:', error); }
 }
 
 function renderNotes(notes) {
   const list = document.getElementById('notes-list');
   if (!list) return;
-  list.innerHTML = notes.length ? '' : '<p class="notes-empty">Sin anotaciones.</p>';
+  
+  if (!notes || notes.length === 0) {
+    list.innerHTML = '<p class="notes-empty">Sin anotaciones.</p>';
+    return;
+  }
+
+  let htmlContent = '';
+  
   notes.slice().reverse().forEach(n => {
-    list.innerHTML += `<div class="note-item"><div class="note-item__text">${n.text}</div><div class="note-item__meta">${n.author} · ${new Date(n.createdAt).toLocaleDateString()}</div></div>`;
+    const dateObj = new Date(n.createdAt);
+    const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const authorStr = n.author || 'Administrador';
+    
+    htmlContent += `
+      <div class="note-item">
+        <div class="note-item__text">${n.text}</div>
+        <div class="note-item__meta">${authorStr} · ${dateStr}</div>
+      </div>
+    `;
   });
+  
+  list.innerHTML = htmlContent;
 }
 
 async function applySanction() {
@@ -319,16 +346,25 @@ async function applySanction() {
   const reason = document.getElementById('sanction-reason').value.trim();
   const days = parseInt(document.getElementById('sanction-days').value, 10);
   const alertEl = document.getElementById('sanction-alert');
+  
   if (!reason || !days) {
     alertEl.textContent = 'Llena el motivo y los días.'; alertEl.style.display='block'; return;
   }
 
   try {
-    const expiresAt = new Date();
+    const exactTime = new Date();
+    const expiresAt = new Date(exactTime.getTime());
     expiresAt.setDate(expiresAt.getDate() + days);
-    const sanction = { reason, days, appliedAt: new Date().toISOString(), expiresAt: expiresAt.toISOString(), appliedBy: auth.currentUser?.email };
     
-    // 1. Guarda en la base de datos
+    const sanction = { 
+      reason, 
+      days, 
+      appliedAt: exactTime.toISOString(), 
+      expiresAt: expiresAt.toISOString(), 
+      appliedBy: auth.currentUser?.email 
+    };
+    
+    // 1. Guardar en Firebase
     await updateDoc(doc(db, 'users', activeUserId), { sanctions: arrayUnion(sanction) });
 
     const userData = allSubmissions.find(u => u.id === activeUserId);
@@ -345,36 +381,59 @@ async function applySanction() {
       });
     }
 
-    // 3. ACTUALIZACIÓN INSTANTÁNEA EN PANTALLA
+    // 3. Actualización de Interfaz (Anti-Duplicados)
     if (userData) {
       if (!userData.sanctions) userData.sanctions = [];
-      userData.sanctions.push(sanction);
-      renderSanctions(userData.sanctions);
+      const isDuplicate = userData.sanctions.some(s => new Date(s.appliedAt).getTime() === exactTime.getTime());
+      
+      if (!isDuplicate) {
+        userData.sanctions.push(sanction);
+        renderSanctions(userData.sanctions);
+      }
     }
 
+    // 4. Limpiar formulario
     document.getElementById('sanction-reason').value = '';
     document.getElementById('sanction-days').value = '';
     alertEl.style.display = 'none';
 
-  } catch (error) { console.error('Error:', error); }
+  } catch (error) { console.error('Error al aplicar sanción:', error); }
 }
 
 function renderSanctions(sanctions) {
   const list = document.getElementById('sanctions-list');
   if (!list) return;
-  list.innerHTML = sanctions.length ? '' : '<p class="notes-empty">Sin historial de sanciones.</p>';
+  
+  if (!sanctions || sanctions.length === 0) {
+    list.innerHTML = '<p class="notes-empty">Sin historial de sanciones.</p>';
+    return;
+  }
+
+  let htmlContent = '';
   const now = new Date();
+  
   sanctions.slice().reverse().forEach(s => {
     const isActive = new Date(s.expiresAt) > now;
     const bg = isActive ? 'var(--clr-danger-dim)' : 'rgba(255,255,255,0.04)';
     const border = isActive ? 'rgba(239,68,68,0.3)' : 'var(--clr-border)';
-    const icon = isActive ? '⚠' : '✓';
+    const icon = isActive ? '⚠️' : '✓';
     const opacity = isActive ? '1' : '0.6';
     const statusLabel = isActive ? '' : '<span style="font-size: 0.65rem; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; margin-left: 8px;">EXPIRADA</span>';
-    list.innerHTML += `<div class="sanction-item" style="background: ${bg}; border: 1px solid ${border}; opacity: ${opacity};"><div class="sanction-item__reason">${icon} ${s.reason} ${statusLabel}</div><div class="sanction-item__meta">${s.days} días · Por: ${s.appliedBy}</div></div>`;
-  });
-}
+    
+    const dateObj = new Date(s.appliedAt);
+    const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const authorStr = s.appliedBy || 'Administrador';
 
+    htmlContent += `
+      <div class="sanction-item" style="background: ${bg}; border: 1px solid ${border}; opacity: ${opacity};">
+        <div class="sanction-item__reason">${icon} ${s.reason} ${statusLabel}</div>
+        <div class="sanction-item__meta">${s.days} días · Por: ${authorStr} · ${dateStr}</div>
+      </div>
+    `;
+  });
+  
+  list.innerHTML = htmlContent;
+}
 function renderGlobalSanctions() {
   const container = document.getElementById('global-sanctions-list');
   const emptyState = document.getElementById('sanctions-view-empty');
