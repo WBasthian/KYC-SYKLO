@@ -143,7 +143,7 @@ function renderProfile(user) {
 
   updateVerificationButtons(user.status);
   renderDocPreview('admin-doc-preview', 'admin-doc-download', user.docFileURL, 'image');
-  renderDocPreview('admin-selfie-preview', 'admin-selfie-download', user.selfieFileURL, 'video');
+  renderDocPreview('admin-selfie-preview', 'admin-selfie-download', user.selfieFileURL, 'image');
 
   renderNotes(user.notes || []);
   renderSanctions(user.sanctions || []);
