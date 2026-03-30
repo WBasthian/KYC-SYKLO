@@ -32,12 +32,35 @@ function initDashboard() {
   initProfileTabs();
   initVerificationActions();
   initRiskManagement();
+  initSidebarNavigation(); // NUEVO: navegación entre vistas del sidebar
+}
+
+// ── NAVEGACIÓN GLOBAL DEL SIDEBAR ──
+// CAMBIO 1: Maneja los clics en .sidebar__link, actualiza la clase activa
+// y muestra únicamente la vista (.dash-view) correspondiente al data-view.
+function initSidebarNavigation() {
+  document.querySelectorAll('.sidebar__link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetView = link.dataset.view;
+      if (!targetView) return;
+
+      // Actualizar clase activa en el sidebar
+      document.querySelectorAll('.sidebar__link').forEach(l => l.classList.remove('sidebar__link--active'));
+      link.classList.add('sidebar__link--active');
+
+      // Mostrar sólo la vista correspondiente
+      document.querySelectorAll('.dash-view').forEach(view => {
+        view.classList.toggle('hidden', view.id !== `view-${targetView}`);
+      });
+    });
+  });
 }
 
 // ── 1. CARGA EN TIEMPO REAL DESDE FIRESTORE ──
 function loadSubmissions() {
   const q = query(collection(db, 'users'), orderBy('submittedAt', 'desc'));
-  
+
   onSnapshot(q, (snapshot) => {
     allSubmissions = snapshot.docs.map(doc => ({
       id: doc.id,
@@ -45,6 +68,7 @@ function loadSubmissions() {
     }));
     applyFiltersAndSearch();
     updateStats();
+    renderGlobalSanctions(); // CAMBIO 4: reactividad en tiempo real para el panel de sanciones
   }, (error) => {
     console.error('[Dashboard] Error cargando solicitudes:', error);
   });
@@ -96,7 +120,7 @@ function renderList(submissions) {
     card.className = `user-card ${user.id === activeUserId ? 'user-card--active' : ''}`;
     card.dataset.userId = user.id;
     const initials = (user.fullName || user.username || '?').split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
-    
+
     card.innerHTML = `
       <div class="user-card__avatar">${initials}</div>
       <div class="user-card__info">
@@ -127,7 +151,7 @@ function renderProfile(user) {
   setEl('profile-avatar', (user.fullName || '?').charAt(0).toUpperCase());
   setEl('profile-name', user.fullName);
   setEl('profile-username', `@${user.username}`);
-  
+
   const statusEl = document.getElementById('profile-status-badge');
   if (statusEl) statusEl.className = `status-badge status-badge--${user.status}`;
   if (statusEl) statusEl.textContent = user.status;
@@ -164,7 +188,7 @@ function renderDocPreview(previewId, downloadId, url, type) {
   if (link) { link.href = url; link.style.display = 'block'; }
   const isVideo = url.includes('.mp4') || type === 'video';
 
-  wrap.innerHTML = isVideo 
+  wrap.innerHTML = isVideo
     ? `<video src="${url}" controls muted style="max-height:160px;border-radius:var(--radius-sm);"></video>`
     : `<img src="${url}" style="max-height:160px;border-radius:var(--radius-sm);" />`;
 }
@@ -189,7 +213,7 @@ function initVerificationActions() {
 async function updateUserStatus(newStatus) {
   if (!activeUserId) return;
   const actionAlert = document.getElementById('action-alert');
-  
+
   try {
     const userRef = doc(db, 'users', activeUserId);
     await updateDoc(userRef, {
@@ -197,10 +221,20 @@ async function updateUserStatus(newStatus) {
       reviewedAt: serverTimestamp(),
       reviewedBy: auth.currentUser?.email
     });
-    
+
     actionAlert.textContent = newStatus === 'approved' ? '✓ KYC aprobado.' : '✗ KYC rechazado.';
     actionAlert.className = `form-alert form-alert--sm is-${newStatus === 'approved' ? 'success' : 'error'}`;
     actionAlert.style.display = 'flex';
+
+    // CAMBIO 2: Corrección del desfase de estado — actualizar el badge del perfil
+    // inmediatamente sin esperar al próximo ciclo de onSnapshot.
+    const statusBadge = document.getElementById('profile-status-badge');
+    if (statusBadge) {
+      statusBadge.className = `status-badge status-badge--${newStatus}`;
+      statusBadge.textContent = newStatus;
+    }
+    updateVerificationButtons(newStatus);
+
   } catch (error) {
     console.error('Error actualizando estado:', error);
   }
@@ -217,7 +251,7 @@ function updateVerificationButtons(status) {
 function initRiskManagement() {
   document.getElementById('btn-add-note')?.addEventListener('click', addNote);
   document.getElementById('btn-apply-sanction')?.addEventListener('click', applySanction);
-  
+
   // Dropzone para evidencia
   const input = document.getElementById('sanction-evidence');
   const zone = document.getElementById('sanction-dropzone');
@@ -280,7 +314,7 @@ async function applySanction() {
     };
 
     await updateDoc(doc(db, 'users', activeUserId), { sanctions: arrayUnion(sanction) });
-    
+
     document.getElementById('sanction-reason').value = '';
     document.getElementById('sanction-days').value = '';
     document.getElementById('sanction-dropzone-ui').textContent = 'Seleccionar imagen de evidencia';
@@ -295,6 +329,79 @@ function renderSanctions(sanctions) {
   list.innerHTML = sanctions.length ? '' : '<p class="notes-empty">Sin sanciones activas.</p>';
   sanctions.slice().reverse().forEach(s => {
     list.innerHTML += `<div class="sanction-item"><div class="sanction-item__reason">⚠ ${s.reason}</div><div class="sanction-item__meta">${s.days} días · Por: ${s.appliedBy} ${s.evidenceURL ? `<a href="${s.evidenceURL}" target="_blank">Ver prueba</a>` : ''}</div></div>`;
+  });
+}
+
+// ── CAMBIO 3: PANEL GLOBAL DE SANCIONES ──
+// Itera sobre allSubmissions, filtra los que tienen sanciones y renderiza
+// tarjetas clicables que navegan directamente a la pestaña de Riesgo del usuario.
+function renderGlobalSanctions() {
+  const container = document.getElementById('global-sanctions-list');
+  const emptyState = document.getElementById('sanctions-view-empty');
+  if (!container) return;
+
+  // Limpiar tarjetas anteriores (preservar el empty state en el DOM)
+  container.querySelectorAll('.user-card').forEach(c => c.remove());
+
+  // Filtrar usuarios con al menos una sanción
+  const sanctionedUsers = allSubmissions.filter(
+    user => Array.isArray(user.sanctions) && user.sanctions.length > 0
+  );
+
+  if (sanctionedUsers.length === 0) {
+    emptyState?.classList.remove('hidden');
+    return;
+  }
+  emptyState?.classList.add('hidden');
+
+  sanctionedUsers.forEach(user => {
+    // Obtener la sanción más reciente (última del array)
+    const lastSanction = user.sanctions[user.sanctions.length - 1];
+    const expiresDate = lastSanction.expiresAt
+      ? new Date(lastSanction.expiresAt).toLocaleDateString()
+      : '—';
+
+    const initials = (user.fullName || user.username || '?')
+      .split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+
+    const card = document.createElement('div');
+    card.className = 'user-card';
+    card.dataset.userId = user.id;
+    card.style.cursor = 'pointer';
+
+    card.innerHTML = `
+      <div class="user-card__avatar">${initials}</div>
+      <div class="user-card__info">
+        <div class="user-card__name">${user.fullName || '—'}</div>
+        <div class="user-card__username">@${user.username || '—'}</div>
+        <div class="user-card__doc font-mono">⚠ ${lastSanction.reason || 'Sin motivo'}</div>
+        <div class="user-card__doc" style="font-size:0.75rem; opacity:0.6;">
+          Expira: ${expiresDate} · ${user.sanctions.length} sanción${user.sanctions.length !== 1 ? 'es' : ''}
+        </div>
+      </div>
+      <div class="user-card__status">
+        <span class="status-badge status-badge--${user.status}">${user.status}</span>
+      </div>
+    `;
+
+    // Al hacer clic:
+    // a) Cambiar la vista activa a view-submissions (simulando clic en el enlace del menú)
+    // b) Cargar el perfil del usuario con selectUser()
+    // c) Abrir directamente la pestaña de Gestión de Riesgo con activateTab('risk')
+    card.addEventListener('click', () => {
+      // a) Navegar a la vista de Solicitudes
+      const submissionsLink = document.querySelector('.sidebar__link[data-view="submissions"]');
+      if (submissionsLink) submissionsLink.click();
+
+      // b) Seleccionar el usuario en la lista
+      selectUser(user.id);
+
+      // c) Abrir la pestaña de Gestión de Riesgo tras un pequeño delay
+      //    para asegurar que el perfil ya está montado en el DOM
+      setTimeout(() => activateTab('risk'), 50);
+    });
+
+    container.appendChild(card);
   });
 }
 
