@@ -343,10 +343,19 @@ function renderGlobalSanctions() {
   // Limpiar tarjetas anteriores (preservar el empty state en el DOM)
   container.querySelectorAll('.user-card').forEach(c => c.remove());
 
-  // Filtrar usuarios con al menos una sanción
-  const sanctionedUsers = allSubmissions.filter(
-    user => Array.isArray(user.sanctions) && user.sanctions.length > 0
-  );
+  // Filtrar usuarios que tienen al menos UNA sanción activa el día de hoy
+  const now = new Date();
+  
+  const sanctionedUsers = allSubmissions.filter(user => {
+    if (!Array.isArray(user.sanctions) || user.sanctions.length === 0) return false;
+    
+    // Revisar si alguna de sus sanciones tiene una fecha de expiración mayor a hoy
+    return user.sanctions.some(sanction => {
+      if (!sanction.expiresAt) return false;
+      const expDate = new Date(sanction.expiresAt);
+      return expDate > now; // Solo retorna true si la sanción sigue vigente
+    });
+  });
 
   if (sanctionedUsers.length === 0) {
     emptyState?.classList.remove('hidden');
